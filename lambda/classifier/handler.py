@@ -15,7 +15,7 @@ import os
 import boto3
 from classifier.features     import extract_features, validate_event
 from classifier.model        import ThreatClassifier
-from classifier.threat_types import get_remediation, SEVERITY_COLOR
+from classifier.threat_types import get_remediation
 
 SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
 ALERT_THRESHOLD_SEVERITY = {"Medium", "High", "Critical"}
@@ -50,8 +50,9 @@ def handler(event, context):
 
         print(f"[Classifier] {record.get('source_ip','?')} → {threat} ({severity}, {confidence:.2%})")
 
-        # Publish CloudWatch metric
-        _put_metric(threat, severity)
+        # Publish CloudWatch metric (normal traffic would otherwise trip the volume alarm)
+        if threat != "normal":
+            _put_metric(threat, severity)
 
         # Alert if above threshold
         if severity in ALERT_THRESHOLD_SEVERITY:
@@ -68,18 +69,24 @@ def handler(event, context):
 
 
 def _put_metric(threat, severity):
+    # CloudWatch stores each dimension combination as a separate metric, so publish
+    # all three views: per type+severity (dashboard), per severity (critical alarm),
+    # and the total (volume alarm + "Total Threats" widget).
+    dimension_sets = [
+        [{"Name": "ThreatType", "Value": threat}, {"Name": "Severity", "Value": severity}],
+        [{"Name": "Severity", "Value": severity}],
+        [],
+    ]
     cw.put_metric_data(
         Namespace="SecurityThreatDetection",
         MetricData=[
             {
                 "MetricName": "ThreatDetected",
-                "Dimensions": [
-                    {"Name": "ThreatType", "Value": threat},
-                    {"Name": "Severity",   "Value": severity},
-                ],
+                "Dimensions": dims,
                 "Value": 1,
                 "Unit":  "Count",
             }
+            for dims in dimension_sets
         ],
     )
 

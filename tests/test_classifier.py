@@ -2,9 +2,11 @@
 Unit tests for the threat classifier pipeline.
 Run: pytest tests/test_classifier.py -v
 """
+import sys
+import os
+
 import numpy as np
-import pytest
-import sys, os
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from classifier.features     import extract_features, validate_event
@@ -49,8 +51,8 @@ class TestFeatureExtraction:
 
     def test_dos_event_high_bytes(self):
         feat = extract_features(DOS_EVENT)
-        # bytes_sent is index 3
-        assert feat[0, 3] == float(DOS_EVENT["bytes_sent"])
+        # bytes_sent is index 3 (features are float32, so compare at that precision)
+        assert feat[0, 3] == np.float32(DOS_EVENT["bytes_sent"])
 
     def test_privileged_port_flag(self):
         feat = extract_features(NORMAL_EVENT)   # dst_port=443, privileged

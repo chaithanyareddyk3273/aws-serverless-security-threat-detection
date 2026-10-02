@@ -7,12 +7,11 @@ Usage:
 """
 import os
 import pickle
-import numpy as np
 import pandas as pd
 from sklearn.ensemble         import RandomForestClassifier
 from sklearn.preprocessing    import StandardScaler, LabelEncoder
 from sklearn.model_selection  import train_test_split
-from sklearn.metrics          import classification_report, confusion_matrix
+from sklearn.metrics          import classification_report
 
 # ── KDD Cup 99 column names ───────────────────────────────────────────────────
 KDD_COLUMNS = [
@@ -116,9 +115,12 @@ def train(data_path="data/kddcup.data_10_percent.gz"):
     out_dir = "classifier/model_artifacts"
     os.makedirs(out_dir, exist_ok=True)
 
-    with open(f"{out_dir}/model.pkl",   "wb") as f: pickle.dump(clf, f)
-    with open(f"{out_dir}/scaler.pkl",  "wb") as f: pickle.dump(scaler, f)
-    with open(f"{out_dir}/encoder.pkl", "wb") as f: pickle.dump(le, f)
+    with open(f"{out_dir}/model.pkl",   "wb") as f:
+        pickle.dump(clf, f)
+    with open(f"{out_dir}/scaler.pkl",  "wb") as f:
+        pickle.dump(scaler, f)
+    with open(f"{out_dir}/encoder.pkl", "wb") as f:
+        pickle.dump(le, f)
 
     print(f"\n[Train] ✅ Artifacts saved to {out_dir}/")
     return clf, scaler, le

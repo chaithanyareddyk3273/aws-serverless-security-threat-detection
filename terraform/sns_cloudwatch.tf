@@ -24,12 +24,12 @@ resource "aws_cloudwatch_dashboard" "threats" {
           period = 300
           stat   = "Sum"
           metrics = [
-            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "dos",               "Severity", "Critical"],
-            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "ddos",              "Severity", "Critical"],
-            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "brute_force",       "Severity", "High"],
+            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "dos", "Severity", "Critical"],
+            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "ddos", "Severity", "Critical"],
+            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "brute_force", "Severity", "High"],
             ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "data_exfiltration", "Severity", "Critical"],
-            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "port_scan",         "Severity", "Medium"],
-            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "phishing",          "Severity", "High"],
+            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "port_scan", "Severity", "Medium"],
+            ["SecurityThreatDetection", "ThreatDetected", "ThreatType", "phishing", "Severity", "High"],
           ]
           view   = "timeSeries"
           region = var.aws_region

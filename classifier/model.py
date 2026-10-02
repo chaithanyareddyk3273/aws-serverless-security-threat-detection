@@ -21,9 +21,12 @@ class ThreatClassifier:
 
     def _load(self):
         print("[Model] Loading model artifacts...")
-        with open(f"{_BASE}/model.pkl",   "rb") as f: self.model   = pickle.load(f)
-        with open(f"{_BASE}/scaler.pkl",  "rb") as f: self.scaler  = pickle.load(f)
-        with open(f"{_BASE}/encoder.pkl", "rb") as f: self.encoder = pickle.load(f)
+        with open(f"{_BASE}/model.pkl",   "rb") as f:
+            self.model   = pickle.load(f)
+        with open(f"{_BASE}/scaler.pkl",  "rb") as f:
+            self.scaler  = pickle.load(f)
+        with open(f"{_BASE}/encoder.pkl", "rb") as f:
+            self.encoder = pickle.load(f)
         print(f"[Model] Ready. Classes: {list(self.encoder.classes_)}")
 
     def predict(self, feature_vector: np.ndarray) -> dict:

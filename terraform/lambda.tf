@@ -35,7 +35,7 @@ resource "aws_lambda_function" "classifier" {
   handler       = "handler.handler"
   runtime       = "python3.11"
   timeout       = 60
-  memory_size   = 512    # ML model needs more RAM
+  memory_size   = 512 # ML model needs more RAM
 
   filename         = "../lambda/classifier/package.zip"
   source_code_hash = filebase64sha256("../lambda/classifier/package.zip")

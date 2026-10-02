@@ -33,6 +33,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "logs" {
     id     = "archive-old-logs"
     status = "Enabled"
 
+    filter {} # applies to every object in the bucket
+
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
@@ -89,9 +91,28 @@ resource "aws_api_gateway_integration" "ingestor_lambda" {
 
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.ingest_api.id
-  stage_name  = var.environment
+
+  # Redeploy whenever the API's routes or integration change
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.ingest.id,
+      aws_api_gateway_method.ingest_post.id,
+      aws_api_gateway_integration.ingestor_lambda.id,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 
   depends_on = [aws_api_gateway_integration.ingestor_lambda]
+}
+
+resource "aws_api_gateway_stage" "main" {
+  rest_api_id   = aws_api_gateway_rest_api.ingest_api.id
+  deployment_id = aws_api_gateway_deployment.main.id
+  stage_name    = var.environment
+  tags          = local.tags
 }
 
 # ── IAM — Lambda execution role ───────────────────────────────────────────────
@@ -118,33 +139,33 @@ resource "aws_iam_role_policy" "lambda_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "Logging"
-        Effect = "Allow"
-        Action = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "Logging"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "arn:aws:logs:*:*:*"
       },
       {
-        Sid    = "S3Logs"
-        Effect = "Allow"
-        Action = ["s3:PutObject", "s3:GetObject"]
+        Sid      = "S3Logs"
+        Effect   = "Allow"
+        Action   = ["s3:PutObject", "s3:GetObject"]
         Resource = "${aws_s3_bucket.logs.arn}/*"
       },
       {
-        Sid    = "SNSPublish"
-        Effect = "Allow"
-        Action = ["sns:Publish"]
+        Sid      = "SNSPublish"
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
         Resource = aws_sns_topic.alerts.arn
       },
       {
-        Sid    = "CloudWatch"
-        Effect = "Allow"
-        Action = ["cloudwatch:PutMetricData"]
+        Sid      = "CloudWatch"
+        Effect   = "Allow"
+        Action   = ["cloudwatch:PutMetricData"]
         Resource = "*"
       },
       {
-        Sid    = "InvokeClassifier"
-        Effect = "Allow"
-        Action = ["lambda:InvokeFunction"]
+        Sid      = "InvokeClassifier"
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
         Resource = aws_lambda_function.classifier.arn
       },
     ]
@@ -162,7 +183,7 @@ locals {
 # ── Outputs ───────────────────────────────────────────────────────────────────
 output "api_endpoint" {
   description = "POST logs to this endpoint"
-  value       = "${aws_api_gateway_deployment.main.invoke_url}/ingest"
+  value       = "${aws_api_gateway_stage.main.invoke_url}/ingest"
 }
 
 output "log_bucket" {
